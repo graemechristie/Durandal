@@ -1,4 +1,4 @@
-﻿define(function(require) {
+﻿define(function (require) {
     var system = require('durandal/system'),
         viewEngine = require('durandal/viewEngine');
 
@@ -9,9 +9,10 @@
     }
 
     return {
-        locateViewForModel: function(model) {
+        locateViewForModel: function (model) {
             var view;
 
+            debugger;
             if (model.getView) {
                 view = model.getView();
                 if (view) {
@@ -30,8 +31,8 @@
             var viewUrl = 'views/' + getTypeName(model);
             return this.locateView(viewUrl);
         },
-        locateView: function(view) {
-            return system.defer(function(dfd) {
+        locateView: function (view) {
+            return system.defer(function (dfd) {
                 if (typeof view === 'string') {
                     if (view.indexOf(viewEngine.viewExtension) != -1) {
                         view = view.substring(0, view.length - viewEngine.viewExtension.length);
@@ -39,7 +40,7 @@
 
                     var requireExpression = viewEngine.pluginPath + '!' + view + viewEngine.viewExtension;
 
-                    system.acquire(requireExpression).then(function(result) {
+                    system.acquire(requireExpression).then(function (result) {
                         dfd.resolve(viewEngine.createView(view, result));
                     });
                 } else {
