@@ -4,12 +4,12 @@
 
     return {
         displayName: "Navigation",
-        activeItem: ko.observable(first),
+        activeItem: first,
         gotoFirst: function() {
-            this.activeItem(first);
+            this.activeItem = first;
         },
         gotoSecond: function() {
-            this.activeItem(second);
+            this.activeItem = second;
         }
     };
 });

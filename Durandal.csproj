@@ -67,6 +67,7 @@
     <Content Include="app\content\images\ios-startup-image-portrait.png" />
     <Content Include="app\durandal\app.js" />
     <Content Include="app\durandal\composition.js" />
+    <Content Include="app\durandal\dataBinding.js" />
     <Content Include="app\durandal\dom.js" />
     <Content Include="app\durandal\events.js" />
     <Content Include="app\durandal\http.js" />
@@ -77,8 +78,8 @@
     <Content Include="app\durandal\viewEngine.js" />
     <Content Include="app\durandal\viewLocator.js" />
     <Content Include="app\durandal\viewModelBinder.js" />
+    <Content Include="app\lib\change_summary.js" />
     <Content Include="app\lib\jquery-1.7.min.js" />
-    <Content Include="app\lib\knockout-2.1.0.js" />
     <Content Include="app\lib\require.js" />
     <Content Include="app\lib\text.js" />
     <Content Include="app\main.js" />
@@ -114,17 +115,7 @@
     <VisualStudio>
       <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
         <WebProjectProperties>
-          <UseIIS>False</UseIIS>
-          <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>38920</DevelopmentServerPort>
-          <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>
-          </IISUrl>
-          <NTLMAuthentication>False</NTLMAuthentication>
-          <UseCustomServer>False</UseCustomServer>
-          <CustomServerUrl>
-          </CustomServerUrl>
-          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+          <SaveServerSettingsInUserFile>True</SaveServerSettingsInUserFile>
         </WebProjectProperties>
       </FlavorProperties>
     </VisualStudio>

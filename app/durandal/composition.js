@@ -1,11 +1,11 @@
-﻿define(function(require) {
+﻿define(function (require) {
     var viewLocator = require('durandal/viewLocator'),
         viewModelBinder = require('durandal/viewModelBinder'),
         viewEngine = require('durandal/viewEngine'),
         system = require('durandal/system');
 
     var binding = {
-        switchContent: function(parent, newChild, settings) {
+        switchContent: function (parent, newChild, settings) {
             if (!newChild) {
                 $(parent).empty();
             } else {
@@ -16,34 +16,34 @@
                 }
             }
         },
-        defaultStrategy: function(settings) {
+        defaultStrategy: function (settings) {
             return viewLocator.locateViewForModel(settings.model);
         },
-        getSettings: function(valueAccessor) {
-            var settings = {},
-                value = ko.utils.unwrapObservable(valueAccessor()) || {};
+//        getSettings: function (valueAccessor) {
+//            var settings = {},
+//                value = ko.utils.unwrapObservable(valueAccessor()) || {};
 
-            if (typeof value == 'string') {
-                settings = value;
-            } else {
-                for (var attrName in value) {
-                    if (typeof attrName == 'string') {
-                        var attrValue = ko.utils.unwrapObservable(value[attrName]);
-                        settings[attrName] = attrValue;
-                    }
-                }
-            }
+//            if (typeof value == 'string') {
+//                settings = value;
+//            } else {
+//                for (var attrName in value) {
+//                    if (typeof attrName == 'string') {
+//                        var attrValue = ko.utils.unwrapObservable(value[attrName]);
+//                        settings[attrName] = attrValue;
+//                    }
+//                }
+//            }
 
-            return settings;
-        },
-        executeStrategy: function(element, settings) {
+//            return settings;
+//        },
+        executeStrategy: function (element, settings) {
             var that = this;
-            settings.strategy(settings).then(function(view) {
+            settings.strategy(settings).then(function (view) {
                 viewModelBinder.bind(settings.model, view);
                 that.switchContent(element, view, settings);
             });
         },
-        inject: function(element, settings) {
+        inject: function (element, settings) {
             var that = this;
 
             if (!settings.model) {
@@ -52,7 +52,7 @@
             }
 
             if (settings.view) {
-                viewLocator.locateView(settings.view).then(function(view) {
+                viewLocator.locateView(settings.view).then(function (view) {
                     viewModelBinder.bind(settings.model, view);
                     that.switchContent(element, view, settings);
                 });
@@ -64,7 +64,7 @@
             }
 
             if (typeof settings.strategy == 'string') {
-                system.acquire(settings.strategy).then(function(strategy) {
+                system.acquire(settings.strategy).then(function (strategy) {
                     settings.strategy = strategy;
                     that.executeStrategy(element, settings);
                 });
@@ -72,7 +72,7 @@
                 this.executeStrategy(element, settings);
             }
         },
-        compose: function(element, settings, fallbackModel) {
+        compose: function (element, settings, fallbackModel) {
             var that = this;
 
             if (typeof settings == 'string') {
@@ -89,7 +89,7 @@
 
             if (settings && settings.__moduleId__) {
                 settings = {
-                    model:settings
+                    model: settings
                 };
             }
 
@@ -97,13 +97,13 @@
                 if (!settings.view) {
                     this.switchContent(element, null, settings);
                 } else {
-                    viewLocator.locateView(settings.view).then(function(view) {
+                    viewLocator.locateView(settings.view).then(function (view) {
                         viewModelBinder.bind(fallbackModel || {}, view);
                         that.switchContent(element, view, settings);
                     });
                 }
             } else if (typeof settings.model == 'string') {
-                system.acquire(settings.model).then(function(module) {
+                system.acquire(settings.model).then(function (module) {
                     //TODO: is it an object or function?
                     //if function, call as ctor
 
@@ -113,13 +113,6 @@
             } else {
                 this.inject(element, settings);
             }
-        }
-    };
-
-    ko.bindingHandlers.compose = {
-        update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-            var settings = binding.getSettings(valueAccessor);
-            binding.compose(element, settings, viewModel);
         }
     };
 

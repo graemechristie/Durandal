@@ -12,7 +12,6 @@
         locateViewForModel: function (model) {
             var view;
 
-            debugger;
             if (model.getView) {
                 view = model.getView();
                 if (view) {
