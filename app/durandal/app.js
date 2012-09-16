@@ -48,6 +48,10 @@
 
                 };
             }
+        },
+        computed: function (deps, f) {
+            f.__computed__ = { deps: deps };
+            return f;
         }
     };
 

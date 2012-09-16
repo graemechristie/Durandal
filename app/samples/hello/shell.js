@@ -3,10 +3,10 @@
 
     return {
         displayName: "Hello",
-        name: "Phil",
+        name: "",
         sayHello: function () {
             app.showMessage("Hello " + this.name, "Greetings");
         },
-        canSayHello: function () { return true; }
+        canSayHello: app.computed(["name"], function () { return this.name.length > 0; })
     };
 });
