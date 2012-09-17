@@ -11,8 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+define(function() {
 
-(function(global) {
+  var global = window;
 
   function isIndex(s) {
     return +s === s >>> 0;
@@ -928,5 +929,5 @@
     return splices;
   }
 
-  global.ChangeSummary = ChangeSummary;
-})(this);
+  return ChangeSummary;
+});

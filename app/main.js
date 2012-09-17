@@ -1,6 +1,8 @@
 ﻿require.config({
     paths: {
-        "text": "lib/text"
+        "text": "lib/text",
+        "feature": "lib/feature",
+        "implementations": "app.impl-map"
     }
 });
 

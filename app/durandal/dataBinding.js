@@ -1,4 +1,7 @@
-﻿define(['require', 'durandal/composition'], function (require) {
+﻿define(['require', 'feature!weakmap', 'feature!changesummary','durandal/composition'], function (require) {
+    var WeakMap = require('feature!weakmap');
+    var ChangeSummary = require('feature!changesummary');
+    var map = WeakMap();
 
     var bindingProperties = {
         value: 1,
@@ -12,7 +15,8 @@
         button: bindingProperties.click
     }
 
-    
+
+    // Simple helper property to get model[property] and resolve it if it is a computed
     var getProperty = function (model, property) {
         var value = model[property];
 
@@ -23,9 +27,10 @@
         return value;
     };
 
+    // Simple helper property to set model[property] and check  it is not a computed/function
     var setProperty = function (model, property, value) {
         if (typeof model[property] === "function") {
-            throw "Attempt to assign to computed property or function '"+expression+"'";
+            throw "Attempt to assign to computed property or function '" + expression + "'";
         };
 
         if (typeof model[property] === "undefined") {
@@ -36,8 +41,10 @@
     };
 
 
+    // Add updatefunction to the weak map of bound functions for the property "expression" of model
     var bind = function (model, expression, updateFunction) {
         var value = model[expression];
+        var bindings;
 
         updateFunction.call();
 
@@ -46,14 +53,23 @@
             $.each(value.__computed__.deps, function (i, dep) {
                 // Dependancy on value in this view model, dep is a simple string property name
                 if (typeof dep === "string") {
-                    model.__bindings__[dep] = model.__bindings__[dep] || [];
-                    model.__bindings__[dep].push(updateFunction);
+                    if (!map.has(model))
+                        map.set(model, {});
+                    bindings = map.get(model);
+                    bindings[dep] = bindings[dep] || [];
+                    bindings[dep].push(updateFunction);
                     return;
                 }
                 // Dependancy on value in another observable, { object: foo, property: "bar" }
+                // We probably don't need this. I think it is cleaner to only allow computed props to
+                // have dependencies in the same viewModel. Dependencies on other view models can be modeled
+                // using a pub/sub/event bus architecture. Leaving this in for now.
                 if (typeof dep === "object" && typeof dep.object == "object" && typeof dep.property === "string") { // && dep.object is observable
-                    dep.object.__bindings__[dep.property] = dep.object.__bindings__[expression] || [];
-                    dep.object.__bindings__[dep.property].push(updateFunction);
+                    if (!map.has(dep.object))
+                        map.set(dep.object, {});
+                    bindings = map.get(dep.object, {});
+                    bindings[dep.property] = bindings[dep.property] || [];
+                    bindings[dep.property].push(updateFunction);
                     return;
                 }
                 throw ("Invalid syntax for computed property dependencies.");
@@ -62,13 +78,18 @@
         }
 
         // Otherwise regular property
-
-        model.__bindings__[expression] = model.__bindings__[expression] || [];
-        model.__bindings__[expression].push(updateFunction);
+        if (!map.has(model))
+            map.set(model, {});
+        bindings = map.get(model);
+        bindings[expression] = bindings[expression] || [];
+        bindings[expression].push(updateFunction);
     }
 
-
+    // Method that fires on change of any "observed" object
+    // Which is basically any of our view models.
     var observer = new ChangeSummary(function (summaries) {
+        var bindings;
+
         summaries.forEach(function (summary) {
             // summary.object; // The object to which this summary describes changes which occurred.
             // summary.newProperties; // An Array of property names which are new since creation, or the previous callback.
@@ -76,24 +97,20 @@
             // summary.arraySplices; // An Array of objects, each of which describes a "splice", if Array.isArray(summary.object).
             // summary.getOldPathValue(path); // A function which returns previous value of the changed path.
             // summary.getNewPathValue(path); // A function which returns the new value (as of callback) of the changed path.
-
+            // summary.pathValueChanged // An Array of path strings, whose value has changed.
             for (var i in summary.pathValueChanged) {
                 var path = summary.pathValueChanged[i];
 
-                if (path.lastIndexOf('__bindings__') !== -1)
-                    continue;
+                bindings = map.get(summary.object);
 
-                updateFunctions = summary.object.__bindings__[path];
-                if (updateFunctions && updateFunctions.length) {
-                    for (var j in updateFunctions) {
-                        if (typeof updateFunctions[j] == "function") {
-                            updateFunctions[j].call();
+                if (bindings && bindings[path] && bindings[path].length) {
+                    for (var j in bindings[path]) {
+                        if (typeof bindings[path][j] == "function") {
+                            bindings[path][j].call();
                         }
                     }
                 }
             }
-            // An Array of path strings, whose value has changed.
-
         });
     });
 
@@ -102,7 +119,6 @@
             window.models = window.models || {}
             window.models[model.__moduleId__ || 'temp'] = model; // very rough .. for debugging in console TODO: Delete me
 
-            model.__bindings__ = model.__bindings__ || {};
             observer.observe(model);
             var composition = require('durandal/composition'); // Circular Ref with viewModelBinder, so require here at runtime
 
@@ -131,7 +147,6 @@
                 var bindingExpression = $(element).data('bind');
                 var elementType = $(element).get(0).tagName.toLowerCase();
                 var bindingProperty = defaultBinding[elementType] || bindingProperties.html;
-                model.__bindings__[bindingExpression] = model.__bindings__[bindingExpression] || [];
 
                 switch (bindingProperty) {
                     case bindingProperties.value:
