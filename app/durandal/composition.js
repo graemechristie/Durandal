@@ -1,127 +1,122 @@
-﻿define(function(require) {
-    var viewLocator = require('durandal/viewLocator'),
-        viewModelBinder = require('durandal/viewModelBinder'),
-        viewEngine = require('durandal/viewEngine'),
-        system = require('durandal/system');
+define(["require", "exports", 'durandal/viewLocator', 'durandal/viewModelBinder', 'durandal/viewEngine', 'durandal/system'], function(require, exports, __viewLocator__, __viewModelBinder__, __viewEngine__, __system__) {
+    var viewLocator = __viewLocator__;
 
-    var binding = {
-        switchContent: function(parent, newChild, settings) {
-            if (!newChild) {
-                $(parent).empty();
-            } else {
-                $(parent).empty().append(newChild);
+    var viewModelBinder = __viewModelBinder__;
 
-                if (settings.model && settings.model.viewAttached) {
-                    settings.model.viewAttached(newChild);
+    var viewEngine = __viewEngine__;
+
+    var system = __system__;
+
+    function switchContent(parent, newChild, settings) {
+        if(!newChild) {
+            $(parent).empty();
+        } else {
+            $(parent).empty().append(newChild);
+            if(settings.model && settings.model.viewAttached) {
+                settings.model.viewAttached(newChild);
+            }
+        }
+    }
+    exports.switchContent = switchContent;
+    function defaultStrategy(settings) {
+        return viewLocator.locateViewForModel(settings.model);
+    }
+    exports.defaultStrategy = defaultStrategy;
+    function getSettings(valueAccessor) {
+        var settings = {
+        };
+        var value = ko.utils.unwrapObservable(valueAccessor()) || {
+        };
+
+        if(typeof value == 'string') {
+            settings = value;
+        } else {
+            for(var attrName in value) {
+                if(typeof attrName == 'string') {
+                    var attrValue = ko.utils.unwrapObservable(value[attrName]);
+                    settings[attrName] = attrValue;
                 }
             }
-        },
-        defaultStrategy: function(settings) {
-            return viewLocator.locateViewForModel(settings.model);
-        },
-        getSettings: function(valueAccessor) {
-            var settings = {},
-                value = ko.utils.unwrapObservable(valueAccessor()) || {};
-
-            if (typeof value == 'string') {
-                settings = value;
-            } else {
-                for (var attrName in value) {
-                    if (typeof attrName == 'string') {
-                        var attrValue = ko.utils.unwrapObservable(value[attrName]);
-                        settings[attrName] = attrValue;
-                    }
-                }
-            }
-
-            return settings;
-        },
-        executeStrategy: function(element, settings) {
-            var that = this;
-            settings.strategy(settings).then(function(view) {
+        }
+        return settings;
+    }
+    exports.getSettings = getSettings;
+    function executeStrategy(element, settings) {
+        settings.strategy(settings).then(function (view) {
+            viewModelBinder.bind(settings.model, view);
+            switchContent(element, view, settings);
+        });
+    }
+    exports.executeStrategy = executeStrategy;
+    function inject(element, settings) {
+        if(!settings.model) {
+            switchContent(element, null, settings);
+            return;
+        }
+        if(settings.view) {
+            viewLocator.locateView(settings.view).then(function (view) {
                 viewModelBinder.bind(settings.model, view);
-                that.switchContent(element, view, settings);
+                switchContent(element, view, settings);
             });
-        },
-        inject: function(element, settings) {
-            var that = this;
-
-            if (!settings.model) {
-                this.switchContent(element, null, settings);
-                return;
-            }
-
-            if (settings.view) {
-                viewLocator.locateView(settings.view).then(function(view) {
-                    viewModelBinder.bind(settings.model, view);
-                    that.switchContent(element, view, settings);
-                });
-                return;
-            }
-
-            if (!settings.strategy) {
-                settings.strategy = this.defaultStrategy;
-            }
-
-            if (typeof settings.strategy == 'string') {
-                system.acquire(settings.strategy).then(function(strategy) {
-                    settings.strategy = strategy;
-                    that.executeStrategy(element, settings);
-                });
-            } else {
-                this.executeStrategy(element, settings);
-            }
-        },
-        compose: function(element, settings, fallbackModel) {
-            var that = this;
-
-            if (typeof settings == 'string') {
-                if (settings.indexOf(viewEngine.viewExtension, settings.length - viewEngine.viewExtension.length) !== -1) {
-                    settings = {
-                        view: settings
-                    };
-                } else {
-                    settings = {
-                        model: settings
-                    };
-                }
-            }
-
-            if (settings && settings.__moduleId__) {
+            return;
+        }
+        if(!settings.strategy) {
+            settings.strategy = defaultStrategy;
+        }
+        if(typeof settings.strategy == 'string') {
+            system.acquire(settings.strategy).then(function (strategy) {
+                settings.strategy = strategy;
+                executeStrategy(element, settings);
+            });
+        } else {
+            executeStrategy(element, settings);
+        }
+    }
+    exports.inject = inject;
+    function compose(element, settings, fallbackModel) {
+        if(typeof settings == 'string') {
+            if(settings.indexOf(viewEngine.viewExtension, settings.length - viewEngine.viewExtension.length) !== -1) {
                 settings = {
-                    model:settings
+                    view: settings
+                };
+            } else {
+                settings = {
+                    model: settings
                 };
             }
-
-            if (!settings.model) {
-                if (!settings.view) {
-                    this.switchContent(element, null, settings);
-                } else {
-                    viewLocator.locateView(settings.view).then(function(view) {
-                        viewModelBinder.bind(fallbackModel || {}, view);
-                        that.switchContent(element, view, settings);
-                    });
-                }
-            } else if (typeof settings.model == 'string') {
-                system.acquire(settings.model).then(function(module) {
-                    //TODO: is it an object or function?
-                    //if function, call as ctor
-
+        }
+        if(settings && settings.__moduleId__) {
+            settings = {
+                model: settings
+            };
+        }
+        if(!settings.model) {
+            if(!settings.view) {
+                switchContent(element, null, settings);
+            } else {
+                viewLocator.locateView(settings.view).then(function (view) {
+                    viewModelBinder.bind(fallbackModel || {
+                    }, view);
+                    switchContent(element, view, settings);
+                });
+            }
+        } else {
+            if(typeof settings.model == 'string') {
+                system.acquire(settings.model).then(function (module) {
                     settings.model = module;
-                    that.inject(element, settings);
+                    inject(element, settings);
                 });
             } else {
-                this.inject(element, settings);
+                inject(element, settings);
             }
         }
-    };
-
+    }
+    exports.compose = compose;
     ko.bindingHandlers.compose = {
-        update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-            var settings = binding.getSettings(valueAccessor);
-            binding.compose(element, settings, viewModel);
+        update: function (element, valueAccessor, allBindingsAccessor, viewModel) {
+            var settings = getSettings(valueAccessor);
+            compose(element, settings, viewModel);
         }
     };
+})
 
-    return binding;
-});

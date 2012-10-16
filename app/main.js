@@ -1,13 +1,14 @@
-﻿require.config({
-    paths: {
-        "text": "lib/text"
-    }
-});
+define(["require", "exports", 'durandal/app'], function(require, exports, __app__) {
+    window.require.config({
+        paths: {
+            "text": "lib/text"
+        }
+    });
+    var app = __app__;
 
-define(function (require) {
-    var app = require('durandal/app');
     app.start().then(function () {
         app.makeFit();
-        app.setRoot('samples/navigation/shell');
+        app.setRoot('samples/Navigation/shell');
     });
-});
+})
+

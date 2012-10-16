@@ -28,4 +28,7 @@ MSSCCPRJ.SCC
 *.debug.css
 Packages/
 app-built/
-
+Backup/
+UpgradeLog.XML
+UpgradeLog.htm
+_UpgradeReport_Files/
